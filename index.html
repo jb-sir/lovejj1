@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>love</title>
+    <style>
+        /* 全局样式 */
+        html, body {
+            height: 100%;
+            padding: 0;
+            margin: 0;
+            background: #000;
+            overflow: hidden; /* 防止滚动条 */
+        }
+
+        /* 1. 文字雨 canvas（底层） */
+        #canvas {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: 1; /* 最底层 */
+        }
+
+        /* 2. 爱心特效 canvas（中间层） */
+        #pinkboard {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: 2; /* 在文字雨之上，其他元素之下 */
+        }
+
+        /* 3. 文字（佳佳，我爱你） */
+        #child {
+            position: fixed;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10; /* 顶层 */
+        }
+        #child h4 {
+            font-family: "STKaiti";
+            font-size: 40px;
+            color: #f584b7;
+            margin: 0;
+        }
+
+        /* 4. 视频样式 */
+        .tt {
+            position: fixed;
+            top: 65%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10; /* 顶层 */
+        }
+        .tt video {
+            width: 640px;
+            max-width: 90vw; /* 手机自适应 */
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 5px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        /* 5. 右下角图片 */
+        .profile {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 10; /* 顶层 */
+        }
+        .profile-photo {
+            width: 200px;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 10px;
+            border: 3px solid #f584b7;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <!-- 文字雨 canvas -->
+    <canvas id="canvas"></canvas>
+    <!-- 爱心特效 canvas -->
+    <canvas id="pinkboard"></canvas>
+    
+    <!-- 文字 -->
+    <div id="child">
+        <h4>佳佳，我爱你</h4>
+    </div>
+
+    <!-- 视频 -->
+    <div class="tt">
+        <video controls>
+            <source src="./love.mp4" type="video/mp4">
+            您的浏览器不支持视频播放
+        </video>
+    </div>
+
+    <!-- 右下角图片（闭合标签！） -->
+    <div class="profile">
+        <img src="https://jb0.oss-cn-guangzhou.aliyuncs.com/7298b0618f80f6d78c486731eba0993.jpg" class="profile-photo">
+    </div>
+
+    <!-- 1. 文字雨脚本 -->
+    <script>
+        var canvas = document.getElementById('canvas');
+        var ctx = canvas.getContext('2d');
+
+        // 适配窗口大小
+        canvas.height = window.innerHeight;
+        canvas.width = window.innerWidth;
+        window.onresize = function() {
+            canvas.height = window.innerHeight;
+            canvas.width = window.innerWidth;
+            drops = []; // 重置雨滴数组
+            columns = canvas.width / fontSize;
+            for (var x = 0; x < columns; x++) {
+                drops[x] = 1;
+            }
+        };
+
+        var texts = 'I LOVE U'.split('');
+        var fontSize = 16;
+        var columns = canvas.width / fontSize;
+        var drops = [];
+        // 初始化雨滴位置
+        for (var x = 0; x < columns; x++) {
+            drops[x] = 1;
+        }
+
+        function drawTextRain() {
+            // 半透明背景，实现拖影效果
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // 文字样式
+            ctx.fillStyle = '#f584b7';
+            ctx.font = fontSize + 'px arial';
+            // 逐列绘制文字
+            for (var i = 0; i < drops.length; i++) {
+                var text = texts[Math.floor(Math.random() * texts.length)];
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                // 重置雨滴位置
+                if (drops[i] * fontSize > canvas.height || Math.random() > 0.95) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+        setInterval(drawTextRain, 33);
+    </script>
+
+    <!-- 2. 爱心特效脚本 -->
+    <script>
+        var settings = {
+            particles: {
+                length: 500, // 爱心粒子数量
+                duration: 2, // 粒子存活时间（秒）
+                velocity: 100, // 粒子速度
+                effect: -0.75, // 特效强度
+                size: 30, // 粒子大小
+            },
+        };
+
+        // 兼容requestAnimationFrame
+        (function () { 
+            var b = 0; 
+            var c = ["ms", "moz", "webkit", "o"]; 
+            for (var a = 0; a < c.length && !window.requestAnimationFrame; ++a) { 
+                window.requestAnimationFrame = window[c[a] + "RequestAnimationFrame"]; 
+                window.cancelAnimationFrame = window[c[a] + "CancelAnimationFrame"] || window[c[a] + "CancelRequestAnimationFrame"];
+            } 
+            if (!window.requestAnimationFrame) { 
+                window.requestAnimationFrame = function (h, e) { 
+                    var d = new Date().getTime(); 
+                    var f = Math.max(0, 16 - (d - b)); 
+                    var g = window.setTimeout(function () { h(d + f) }, f); 
+                    b = d + f; 
+                    return g; 
+                };
+            } 
+            if (!window.cancelAnimationFrame) { 
+                window.cancelAnimationFrame = function (d) { 
+                    clearTimeout(d); 
+                };
+            } 
+        })();
+
+        // 点类
+        var Point = (function () {
+            function Point(x, y) {
+                this.x = (typeof x !== 'undefined') ? x : 0;
+                this.y = (typeof y !== 'undefined') ? y : 0;
+            }
+            Point.prototype.clone = function () {
+                return new Point(this.x, this.y);
+            };
+            Point.prototype.length = function (length) {
+                if (typeof length == 'undefined')
+                    return Math.sqrt(this.x * this.x + this.y * this.y);
+                this.normalize();
+                this.x *= length;
+                this.y *= length;
+                return this;
+            };
+            Point.prototype.normalize = function () {
+                var length = this.length();
+                this.x /= length;
+                this.y /= length;
+                return this;
+            };
+            return Point;
+        })();
+
+        // 粒子类
+        var Particle = (function () {
+            function Particle() {
+                this.position = new Point();
+                this.velocity = new Point();
+                this.acceleration = new Point();
+                this.age = 0;
+            }
+            Particle.prototype.initialize = function (x, y, dx, dy) {
+                this.position.x = x;
+                this.position.y = y;
+                this.velocity.x = dx;
+                this.velocity.y = dy;
+                this.acceleration.x = dx * settings.particles.effect;
+                this.acceleration.y = dy * settings.particles.effect;
+                this.age = 0;
+            };
+            Particle.prototype.update = function (deltaTime) {
+                this.position.x += this.velocity.x * deltaTime;
+                this.position.y += this.velocity.y * deltaTime;
+                this.velocity.x += this.acceleration.x * deltaTime;
+                this.velocity.y += this.acceleration.y * deltaTime;
+                this.age += deltaTime;
+            };
+            Particle.prototype.draw = function (context, image) {
+                function ease(t) {
+                    return (--t) * t * t + 1;
+                }
+                var size = image.width * ease(this.age / settings.particles.duration);
+                context.globalAlpha = 1 - this.age / settings.particles.duration;
+                context.drawImage(image, this.position.x - size / 2, this.position.y - size / 2, size, size);
+            };
+            return Particle;
+        })();
+
+        // 粒子池类
+        var ParticlePool = (function () {
+            var particles,
+                firstActive = 0,
+                firstFree = 0,
+                duration = settings.particles.duration;
+
+            function ParticlePool(length) {
+                particles = new Array(length);
+                for (var i = 0; i < particles.length; i++)
+                    particles[i] = new Particle();
+            }
+            ParticlePool.prototype.add = function (x, y, dx, dy) {
+                particles[firstFree].initialize(x, y, dx, dy);
+                firstFree++;
+                if (firstFree == particles.length) firstFree = 0;
+                if (firstActive == firstFree) firstActive++;
+                if (firstActive == particles.length) firstActive = 0;
+            };
+            ParticlePool.prototype.update = function (deltaTime) {
+                var i;
+                if (firstActive < firstFree) {
+                    for (i = firstActive; i < firstFree; i++)
+                        particles[i].update(deltaTime);
+                }
+                if (firstFree < firstActive) {
+                    for (i = firstActive; i < particles.length; i++)
+                        particles[i].update(deltaTime);
+                    for (i = 0; i < firstFree; i++)
+                        particles[i].update(deltaTime);
+                }
+                while (particles[firstActive].age >= duration && firstActive != firstFree) {
+                    firstActive++;
+                    if (firstActive == particles.length) firstActive = 0;
+                }
+            };
+            ParticlePool.prototype.draw = function (context, image) {
+                if (firstActive < firstFree) {
+                    for (i = firstActive; i < firstFree; i++)
+                        particles[i].draw(context, image);
+                }
+                if (firstFree < firstActive) {
+                    for (i = firstActive; i < particles.length; i++)
+                        particles[i].draw(context, image);
+                    for (i = 0; i < firstFree; i++)
+                        particles[i].draw(context, image);
+                }
+            };
+            return ParticlePool;
+        })();
+
+        // 爱心特效主逻辑
+        (function (canvas) {
+            var context = canvas.getContext('2d'),
+                particles = new ParticlePool(settings.particles.length),
+                particleRate = settings.particles.length / settings.particles.duration,
+                time;
+
+            // 爱心坐标公式
+            function pointOnHeart(t) {
+                return new Point(
+                    160 * Math.pow(Math.sin(t), 3),
+                    130 * Math.cos(t) - 50 * Math.cos(2 * t) - 20 * Math.cos(3 * t) - 10 * Math.cos(4 * t) + 25
+                );
+            }
+
+            // 创建爱心粒子图片
+            var image = (function () {
+                var canvas = document.createElement('canvas'),
+                    context = canvas.getContext('2d');
+                canvas.width = settings.particles.size;
+                canvas.height = settings.particles.size;
+                function to(t) {
+                    var point = pointOnHeart(t);
+                    point.x = settings.particles.size / 2 + point.x * settings.particles.size / 350;
+                    point.y = settings.particles.size / 2 - point.y * settings.particles.size / 350;
+                    return point;
+                }
+                context.beginPath();
+                var t = -Math.PI;
+                var point = to(t);
+                context.moveTo(point.x, point.y);
+                while (t < Math.PI) {
+                    t += 0.01;
+                    point = to(t);
+                    context.lineTo(point.x, point.y);
+                }
+                context.closePath();
+                context.fillStyle = '#ea80b0';
+                context.fill();
+                var image = new Image();
+                image.src = canvas.toDataURL();
+                return image;
+            })();
+
+            // 渲染爱心
+            function renderHeart() {
+                requestAnimationFrame(renderHeart);
+                var newTime = new Date().getTime() / 1000,
+                    deltaTime = newTime - (time || newTime);
+                time = newTime;
+
+                context.clearRect(0, 0, canvas.width, canvas.height);
+                // 生成新粒子
+                var amount = particleRate * deltaTime;
+                for (var i = 0; i < amount; i++) {
+                    var pos = pointOnHeart(Math.PI - 2 * Math.PI * Math.random());
+                    var dir = pos.clone().length(settings.particles.velocity);
+                    particles.add(canvas.width / 2 + pos.x, canvas.height / 2 - pos.y, dir.x, -dir.y);
+                }
+                // 更新并绘制粒子
+                particles.update(deltaTime);
+                particles.draw(context, image);
+            }
+
+            // 适配窗口大小
+            function onResize() {
+                canvas.width = canvas.clientWidth;
+                canvas.height = canvas.clientHeight;
+            }
+            window.onresize = onResize;
+
+            // 启动渲染
+            setTimeout(function () {
+                onResize();
+                renderHeart();
+            }, 10);
+        })(document.getElementById('pinkboard'));
+    </script>
+</body>
+</html>
